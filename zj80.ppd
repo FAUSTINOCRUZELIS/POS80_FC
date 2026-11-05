@@ -118,6 +118,14 @@
 *FeedDist 12feed39mm/39mm: "<</AdvanceDistance 312>>setpagedevice"
 *FeedDist 13feed42mm/42mm: "<</AdvanceDistance 336>>setpagedevice"
 *FeedDist 14feed45mm/45mm: "<</AdvanceDistance 360>>setpagedevice"
+*FeedDist 15feed60mm/60mm: "<</AdvanceDistance 480>>setpagedevice"
+*FeedDist 16feed75mm/75mm: "<</AdvanceDistance 600>>setpagedevice"
+*FeedDist 17feed90mm/90mm: "<</AdvanceDistance 720>>setpagedevice"
+*FeedDist 18feed105mm/105mm: "<</AdvanceDistance 840>>setpagedevice"
+*FeedDist 19feed120mm/120mm: "<</AdvanceDistance 960>>setpagedevice"
+*FeedDist 20feed123mm/123mm: "<</AdvanceDistance 984>>setpagedevice"
+*FeedDist 21feed126mm/126mm: "<</AdvanceDistance 1008>>setpagedevice"
+*FeedDist 22feed129mm/129mm: "<</AdvanceDistance 1032>>setpagedevice"
 *CloseUI: *FeedDist
 *OpenUI *FeedWhere/When to feed: PickOne
 *OrderDependency: 10 AnySetup *FeedWhere

@@ -32,23 +32,25 @@ rm -rf "$BUILD_DIR"
 cmake -S "$REPO_DIR" -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=Release
 cmake --build "$BUILD_DIR" -j"$(nproc)"
 
-echo "==> Instalando filtro y PPD"
+echo "==> Instalando filtro, backend y PPD"
 install -d "$PPD_INSTALL_DIR"
 install -m 0755 "$BUILD_DIR/rastertozj" "$FILTER_INSTALL"
+install -m 0755 "$REPO_DIR/backend/pos80" /usr/lib/cups/backend/pos80
 if [ -f "$BUILD_DIR/ppd/zj80.ppd" ]; then
   install -m 0644 "$BUILD_DIR/ppd/zj80.ppd" "$PPD_INSTALL_DIR/zj80.ppd"
 else
   install -m 0644 "$REPO_DIR/zj80.ppd" "$PPD_INSTALL_DIR/zj80.ppd"
 fi
 if command -v restorecon >/dev/null 2>&1; then
-  restorecon -v "$FILTER_INSTALL" "$PPD_INSTALL_DIR/zj80.ppd" || true
+  restorecon -v "$FILTER_INSTALL" /usr/lib/cups/backend/pos80 \
+    "$PPD_INSTALL_DIR/zj80.ppd" || true
 fi
 
 echo "==> Reiniciando CUPS"
 systemctl restart cups
 
-echo "==> Creando/actualizando cola $QUEUE -> socket://$PRINTER_IP:9100"
-lpadmin -p "$QUEUE" -E -v "socket://$PRINTER_IP:9100" \
+echo "==> Creando/actualizando cola $QUEUE -> pos80://$PRINTER_IP:9100"
+lpadmin -p "$QUEUE" -E -v "pos80://$PRINTER_IP:9100" \
   -P "$PPD_INSTALL_DIR/zj80.ppd" \
   -o printer-is-shared=false
 
@@ -58,7 +60,7 @@ lpadmin -p "$QUEUE" \
   -o OptionCutter=True \
   -o CutMedia=EndOfJob \
   -o media=X70MMY297MM \
-  -o FeedDist=6feed21mm \
+  -o FeedDist=2feed9mm \
   -o FeedWhere=AfterJob \
   -o BlankSpace=False
 
