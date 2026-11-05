@@ -1,6 +1,9 @@
 Zj-58, Zj-80 and other receipt printers
 =======================================
 
+> Documentación en español y ajustes para Fedora 44 en
+> [README.es.md](README.es.md).
+
 CUPS filter for cheap thermal receipt printers as Zijiang ZJ-58, XPrinter XP-58, JZ-80 with cutter, Epson TM-T20, and may be any other printers understanding ESC/POS commands.
 
 Originally it was reverse-engineered filter for Zijiang zj-58 with it's specific PPD,
