@@ -61,7 +61,7 @@ defecto.
 | `OptionCutter` | `True` | La impresora tiene guillotina |
 | `CutMedia` | `EndOfJob` | Corta al final de cada trabajo |
 | `media` | `X70MMY297MM` | Papel de 80 × 297 mm |
-| `FeedDist` | `2feed9mm` | Avance de 9 mm antes del corte |
+| `FeedDist` | `6feed21mm` | Avance de 21 mm antes del corte (necesario para que la cuchilla pase el texto) |
 | `FeedWhere` | `AfterJob` | El avance se hace al final |
 | `BlankSpace` | `False` | No imprime el espacio en blanco final |
 
@@ -93,11 +93,33 @@ Debe salir un ticket con acentos y, al final, el corte de la guillotina.
 
 Probado el 2026-11-05 en Fedora 44 con la impresora `192.168.1.107`:
 
-- El comando de corte original `GS V 1` corta correctamente (corte completo).
-- El ticket de texto y un PDF pequeño imprimen y se cortan.
-- La cola queda con `CutMedia=EndOfJob` y `OptionCutter=True` por defecto.
+- `GS V 1` (corte parcial) dejaba el ticket unido en esta impresora; se cambió a
+  **`GS V 0` (corte completo)**.
+- Con `FeedDist=6feed21mm` el texto sale completo y la cuchilla corta después de
+  la última línea. Con 9 mm la cuchilla cortaba parte del texto.
+- El filtro ignora los bits de relleno del último byte de cada línea de CUPS; sin
+  eso imprimía todo el rollo de 297 mm antes de cortar.
 - El ancho de 560 px (70 mm) del PPD es suficiente para esta impresora; no hizo
   falta ampliarlo a 576 px.
+- El texto se imprime como gráfico, así que los acentos y símbolos salen
+  correctos.
+
+## Orientación del texto
+
+El driver imprime como un recibo normal: las líneas van **a lo ancho** del papel
+de 80 mm y se apilan a lo largo. Si el papel se cuelga de la impresora, el texto
+se lee de izquierda a derecha.
+
+Si la aplicación envía una página **apaisada**, CUPS la gira para que quepa en el
+rollo y el texto puede verse girado 90°. Para tickets, usa páginas verticales
+(80 mm de ancho). Si necesitas que las líneas corran **a lo largo** del papel
+(giradas 90° respecto al recibo normal), es una orientación distinta y habría que
+añadir una opción de rotación al filtro.
+
+Los primeros ~12 cm de papel en blanco antes del texto son el recorrido interno
+entre el cabezal y la cuchilla; no los genera el driver. Si el ticket anterior
+quedó unido, su cola se suma a ese blanco: arranca el papel viejo antes de la
+prueba.
 
 ## Diagnóstico
 
@@ -110,22 +132,25 @@ opciones.
 
 ## Si el corte no es completo
 
-El driver original usa `GS V 1` (corte parcial). Si la guillotina no corta o
-deja el papel unido, cambia el comando en `rastertozj.c`:
+El repositorio ya usa **`GS V 0` (corte completo)**. Si tu firmware necesita otra
+variante, cambia el comando en `rastertozj.c` y vuelve a ejecutar
+`./install-fedora.sh`:
 
 ```c
-// corte completo
-static const char escCut[] = "\x1dV\0";
-```
-
-o, si el firmware solo entiende la variante de Epson:
-
-```c
+// alternativa Epson
 static const char escCut[] = "\x1bi";
 ```
 
-Vuelve a ejecutar `./install-fedora.sh` y prueba de nuevo. Deja en el commit la
-variante que funcione con esta impresora.
+Si el papel queda unido o la cuchilla corta parte del texto, sube el avance antes
+del corte:
+
+```bash
+sudo lpadmin -p POS80 -o FeedDist=7feed24mm
+# o 8feed27mm, 9feed30mm...
+```
+
+Cada escalón añade 3 mm. En esta impresora `6feed21mm` fue suficiente para que el
+texto salga completo y el ticket se separe.
 
 ## Si la impresora cambia de IP
 

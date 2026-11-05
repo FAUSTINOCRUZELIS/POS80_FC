@@ -135,8 +135,10 @@ static const char escRasterMode[] = "\x1dv0\0";
 static const char escFlush[] = "\x1bJ";
 
 // define cut command
+// GS V 0: full cut (guillotine). GS V 1 is a partial cut and leaves a tab
+// on many Chinese 80 mm printers, so the ticket does not separate.
 //static const char escCut[] = "\x1bi";
-static const char escCut[] = "\x1dV\1";
+static const char escCut[] = "\x1dV\0";
 
 // enter raster mode and set up x and y dimensions
 static inline void sendRasterHeader(int xsize, int ysize) {

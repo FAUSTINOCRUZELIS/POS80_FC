@@ -58,7 +58,7 @@ lpadmin -p "$QUEUE" \
   -o OptionCutter=True \
   -o CutMedia=EndOfJob \
   -o media=X70MMY297MM \
-  -o FeedDist=2feed9mm \
+  -o FeedDist=6feed21mm \
   -o FeedWhere=AfterJob \
   -o BlankSpace=False
 
