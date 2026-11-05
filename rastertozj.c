@@ -328,12 +328,23 @@ static inline unsigned compress_buffer(unsigned char *pBuf, unsigned iSize,
   return min(iSize, pTarget - pBuf);
 }
 
-// returns -1 if whole line iz filled by zeros. Otherwise 0.
-static inline int line_is_empty(const unsigned char *pBuf, unsigned iSize) {
-  int i;
-  for (i = 0; i < iSize; ++i)
+// returns -1 if the visible part of the line is filled by zeros.
+// CUPS pads the last byte of a 1-bit row with 1-bits, so the padding must be
+// masked out; otherwise every line looks non-empty and the blank tail is
+// printed (and the cutter cuts after a long strip of empty paper).
+static inline int line_is_empty(const unsigned char *pBuf, unsigned iSize,
+                                unsigned iWidthBits) {
+  unsigned iFull = iWidthBits >> 3;
+  unsigned iRem = iWidthBits & 7;
+  unsigned i;
+  for (i = 0; i < iFull && i < iSize; ++i)
     if (pBuf[i])
       return 0;
+  if (iRem && iFull < iSize) {
+    unsigned char mask = (unsigned char)(0xFFu << (8 - iRem));
+    if (pBuf[iFull] & mask)
+      return 0;
+  }
   return -1;
 }
 
@@ -451,12 +462,14 @@ int main(int argc, char *argv[]) {
     startPage();
 
     // calculate num of bytes to print given width having 1 bit per pixel.
-    int foo = min(tHeader.cupsWidth, iMaxWidth); // 0x240 for 80mm (72mm printable)
-    foo = (foo + 7) & 0xFFFFFFF8;
+    int iVisibleWidth = min(tHeader.cupsWidth, iMaxWidth); // 0x240 for 80mm
+    if (!iVisibleWidth)
+      iVisibleWidth = 0x240;
+    int foo = (iVisibleWidth + 7) & 0xFFFFFFF8;
     int width_bytes = foo >> 3; // in bytes, [0..0x30]
 
-    DEBUGPRINT("cupsWidth=%d, cupsBytesPerLine=%d; foo=%d, width_bytes=%d",
-        tHeader.cupsWidth, tHeader.cupsBytesPerLine, foo, width_bytes );
+    DEBUGPRINT("cupsWidth=%d, cupsBytesPerLine=%d; visible=%d, foo=%d, width_bytes=%d",
+        tHeader.cupsWidth, tHeader.cupsBytesPerLine, iVisibleWidth, foo, width_bytes );
 
     int iRowsToPrint = tHeader.cupsHeight;
     int zeroy = 0;
@@ -510,7 +523,7 @@ int main(int argc, char *argv[]) {
       const unsigned char *pEnd = pBuf + iBytesChunk;
       int nonzerolines = 0;
       while ( pBuf<pEnd ) {
-        if (line_is_empty(pBuf, width_bytes)) {
+        if (line_is_empty(pBuf, width_bytes, iVisibleWidth)) {
           if (nonzerolines) { // met zero, need to flush collected raster
             send_raster(pChunk, width_bytes, nonzerolines);
             nonzerolines = 0;
