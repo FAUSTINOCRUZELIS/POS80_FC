@@ -212,7 +212,8 @@ void finishPage() {
 }
 
 // sent on job canceling
-void cancelJob() {
+void cancelJob(int sig) {
+  (void)sig;
   int i = 0;
   for (; i < 0x258; ++i)
     mputchar(0);
@@ -220,7 +221,7 @@ void cancelJob() {
 }
 
 // invoked before starting to print a page
-void startPage() { old_signal = signal(SIGTERM, cancelJob); }
+void startPage(void) { old_signal = signal(SIGTERM, cancelJob); }
 
 void DebugPrintHeader (cups_page_header2_t* pHeader)
 {
